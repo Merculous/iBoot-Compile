@@ -1,0 +1,196 @@
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..0dca986
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,3 @@
++.DS_Store
++build
++*.pyc
+diff --git a/Makefile b/Makefile
+index 9dd2c29..950dd67 100644
+--- a/Makefile
++++ b/Makefile
+@@ -34,7 +34,7 @@ SPECIFIC_OPTIONS	:=	TARGETS CONFIGS
+ 
+ # Default SDK platform
+ ifeq ($(BUILD_OS),darwin)
+-export SDK_PLATFORM	?=	iphoneos.internal
++export SDK_PLATFORM	?=	iphoneos
+  ifeq ($(SDKROOT),)
+   SDKROOT_PATH		:=	$(shell xcodebuild -version -sdk $(SDK_PLATFORM) Path)
+   export SDKROOT	:=	$(SDKROOT_PATH)
+diff --git a/drivers/flash_nand/ppn-swiss/ppn.c b/drivers/flash_nand/ppn-swiss/ppn.c
+index bd0afe6..8b953f9 100644
+--- a/drivers/flash_nand/ppn-swiss/ppn.c
++++ b/drivers/flash_nand/ppn-swiss/ppn.c
+@@ -40,7 +40,7 @@ static int nand_read_block_hook(struct blockdev *_dev, void *ptr, block_addr blo
+ 		//err = FTL_Read(block, count, ptr);
+ 	
+ 		if (err != FIL_SUCCESS) {
+-			printf("nand_read_block_hook: failure %d reading block %u, count %zd\n", err, block, count);
++			printf("nand_read_block_hook: failure %d reading block %u, count %u\n", err, block, count);
+ 			return -1;
+ 		}
+ 	}
+diff --git a/lib/fs/fs.c b/lib/fs/fs.c
+index edb6798..8f17048 100644
+--- a/lib/fs/fs.c
++++ b/lib/fs/fs.c
+@@ -392,7 +392,7 @@ int fs_load_file(const char *path, addr_t addr, size_t *maxsize)
+ 	if (result < 0 || (unsigned)result != stat.st_size) {
+ 		platform_record_breadcrumb("fs_load_file", "read_failed");
+ 		// Zero the buffer in case of a partial read
+-		memset((void *)addr, *maxsize, 0);
++		memset((void *)addr, *maxsize, (0));
+ 
+ 		return -1;
+ 	}
+diff --git a/makefiles/build.mk b/makefiles/build.mk
+index b717cbc..f4e540f 100644
+--- a/makefiles/build.mk
++++ b/makefiles/build.mk
+@@ -22,7 +22,7 @@ _CFLAGS			:=	$(GLOBAL_CFLAGS) $(CEXTRAFLAGS) $(CWARNFLAGS)
+ _CPPFLAGS		:=	$(GLOBAL_CFLAGS) $(CPPEXTRAFLAGS) $(CPPWARNFLAGS)
+ 
+ # extra flags to bring in the compiler runtime, since we turn it off via -nodefaultlibs
+-_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib -lcompiler_rt-static $(LIBBUILTIN_BUILD)
++_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib $(LIBBUILTIN_BUILD)
+ 
+ # produce coverage info, but don't add profiling into the built binaries
+ # this lets us compare coverage from unit tests to the lines built for real targets
+diff --git a/makefiles/config.mk b/makefiles/config.mk
+index a5c2206..047613f 100644
+--- a/makefiles/config.mk
++++ b/makefiles/config.mk
+@@ -24,13 +24,13 @@ COPTFLAGS		=	-Oz
+ # Use latest compiler runtime.
+ ifneq ($(RC_XBS), YES)
+ ifeq ($(SDK_PRODUCT_NAME),Watch OS)
+-DEPLOYMENT_TARGET_FLAGS	=	-mwatchos-version-min=$(SDKVERSION)
++DEPLOYMENT_TARGET_FLAGS	=	-mwatchos-version-min=10.0
+ else
+ ifeq ($(SDK_PRODUCT_NAME),Apple TVOS)
+-DEPLOYMENT_TARGET_FLAGS	=	-mtvos-version-min=$(SDKVERSION)
++DEPLOYMENT_TARGET_FLAGS	=	-mtvos-version-min=10.0
+ else
+ ifeq ($(SDK_PRODUCT_NAME),iPhone OS)
+-DEPLOYMENT_TARGET_FLAGS	=	-miphoneos-version-min=$(SDKVERSION)
++DEPLOYMENT_TARGET_FLAGS	=	-miphoneos-version-min=10.0
+ endif
+ endif
+ endif
+diff --git a/tools/BootX2Bin.cpp b/tools/BootX2Bin.cpp
+old mode 100644
+new mode 100755
+diff --git a/tools/Buffer.cpp b/tools/Buffer.cpp
+old mode 100644
+new mode 100755
+diff --git a/tools/Buffer.h b/tools/Buffer.h
+old mode 100644
+new mode 100755
+diff --git a/tools/DeviceTreePatcher.cpp b/tools/DeviceTreePatcher.cpp
+old mode 100644
+new mode 100755
+diff --git a/tools/DeviceTreePatcher.h b/tools/DeviceTreePatcher.h
+old mode 100644
+new mode 100755
+diff --git a/tools/Kernelcache.cpp b/tools/Kernelcache.cpp
+old mode 100644
+new mode 100755
+diff --git a/tools/Kernelcache.h b/tools/Kernelcache.h
+old mode 100644
+new mode 100755
+diff --git a/tools/LoadMachO.cpp b/tools/LoadMachO.cpp
+old mode 100644
+new mode 100755
+diff --git a/tools/LoadMachO.h b/tools/LoadMachO.h
+old mode 100644
+new mode 100755
+diff --git a/tools/Macho2Bin.c b/tools/Macho2Bin.c
+old mode 100644
+new mode 100755
+diff --git a/tools/Makefile b/tools/Makefile
+old mode 100644
+new mode 100755
+diff --git a/tools/analyzer-report.py b/tools/analyzer-report.py
+old mode 100644
+new mode 100755
+diff --git a/tools/analyzer-suppress.txt b/tools/analyzer-suppress.txt
+old mode 100644
+new mode 100755
+diff --git a/tools/bhc.c b/tools/bhc.c
+old mode 100644
+new mode 100755
+diff --git a/tools/check_liblist.py b/tools/check_liblist.py
+old mode 100644
+new mode 100755
+diff --git a/tools/check_product_size b/tools/check_product_size
+old mode 100644
+new mode 100755
+diff --git a/tools/code_sizer b/tools/code_sizer
+old mode 100644
+new mode 100755
+diff --git a/tools/config_debug.tcl b/tools/config_debug.tcl
+old mode 100644
+new mode 100755
+diff --git a/tools/config_seq.py b/tools/config_seq.py
+old mode 100644
+new mode 100755
+diff --git a/tools/csvtopinconfig.py b/tools/csvtopinconfig.py
+old mode 100644
+new mode 100755
+diff --git a/tools/gcovr b/tools/gcovr
+old mode 100644
+new mode 100755
+diff --git a/tools/generate_debug_hashes.py b/tools/generate_debug_hashes.py
+old mode 100644
+new mode 100755
+diff --git a/tools/igmacros b/tools/igmacros
+old mode 100644
+new mode 100755
+diff --git a/tools/iop_stitcher.c b/tools/iop_stitcher.c
+old mode 100644
+new mode 100755
+diff --git a/tools/lldb_init_iboot.py b/tools/lldb_init_iboot.py
+old mode 100644
+new mode 100755
+diff --git a/tools/lldb_os_iboot.py b/tools/lldb_os_iboot.py
+old mode 100644
+new mode 100755
+diff --git a/tools/macho.py b/tools/macho.py
+old mode 100644
+new mode 100755
+diff --git a/tools/macho_post_process.py b/tools/macho_post_process.py
+old mode 100644
+new mode 100755
+diff --git a/tools/missing-symbol-finder b/tools/missing-symbol-finder
+old mode 100644
+new mode 100755
+diff --git a/tools/ofile_cstring_sizes b/tools/ofile_cstring_sizes
+old mode 100644
+new mode 100755
+diff --git a/tools/oldskool_csvtopinconfig.py b/tools/oldskool_csvtopinconfig.py
+old mode 100644
+new mode 100755
+diff --git a/tools/parse_release_log.py b/tools/parse_release_log.py
+old mode 100644
+new mode 100755
+diff --git a/tools/pctrace-decoder b/tools/pctrace-decoder
+old mode 100644
+new mode 100755
+diff --git a/tools/pickfiles.sh b/tools/pickfiles.sh
+old mode 100644
+new mode 100755
+diff --git a/tools/ppnfw_asn1.rb b/tools/ppnfw_asn1.rb
+old mode 100644
+new mode 100755
+diff --git a/tools/rom-release b/tools/rom-release
+old mode 100644
+new mode 100755
+diff --git a/tools/scrub-SecureROM.sh b/tools/scrub-SecureROM.sh
+old mode 100644
+new mode 100755
+diff --git a/tools/symbolicate-panic b/tools/symbolicate-panic
+old mode 100644
+new mode 100755
