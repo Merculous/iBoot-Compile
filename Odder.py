@@ -177,8 +177,8 @@ def main():
         applyPatch()
 
     elif args.build:
-        #targets = devices() # Default, compile iBoot with all supported 32-bit devices
-        build('iBoot', 'n94')
+        targets = devices() # Default, compile iBoot with all supported 32-bit devices
+        build('iBoot', targets)
 
     elif args.clean:
         clean()
