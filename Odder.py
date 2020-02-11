@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import stat
 import sqlite3
 import subprocess
 import sys
@@ -50,28 +51,46 @@ TODO:
 
     - Build SecureROM (if possible)
 
-    - Better patching process
-
-"""
-# -----------------
-"""
-Patching process:
-    - ./Makefile [line 37] // iphoneos.internal > iphoneos [./Makefile line 37]
-    - ./tools/generate_debug_hashes.py // chmod +x 
-    - ./tools/check_liblist.py // chmod +x
-    - ./makefiles/config.mk [line 27, 30, 33] // $SDKVERSION -> 10.0
-    - ./drivers/flash_nand/ppn-swiss/ppn.c [line 43] // count %zd\n -> count %u\n
-    - ./lib/fs/fs.c [line 395] // memset((void *)addr, *maxsize, 0); -> memset((void *)addr, *maxsize, (0));
-    - ./makefiles/build.mk [line 25] // Remove -lcompiler_rt-static
-    - ./tools/macho_post_process.py // chmod +x
-Optional:
-    - ./tools/tools.mk [line 49] // /usr/local/bin/img4 (if you somehow are 1337 h4^X0r, this is useful)
 """
 
+def doPatches(filepath, stockString, patchString, stringLine):
+    # Bad patcher by Matty (@mosk_i)
+    print("Patching", filepath, " at line", stringLine)
+    if os.path.exists(filepath):
+        with open(filepath, "rt") as f:
+            data = f.readlines()
+            if patchString in data[stringLine]:
+                print("Patch already applied, Moving on to next patch...")
+                return
+            if stockString in data[stringLine]:
+                data[stringLine] = str(patchString)
+                f.close()
+                g = open(filepath, "wt")
+                g.writelines( data )
+                g.close()
+                # changing file permissions
+                os.chmod(filepath, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                return
+            else:
+                print("Didn't find '", stockString, "' in", filepath, " at line ", stringLine, " Moving on to next patch...") 
+                return
+    else:
+        print("Couldn't find file at '", filepath,"'. Moving on to next patch...")
+        return
 
-def applyPatch(): # TODO Either add some code to change, or make a better patch file or similar
-    #subprocess.run(['git', 'apply', '--verbose', 'patchfile'], stdout=subprocess.PIPE)
-    # If you can somehow use the provided patchfile (not from git diff this time)
+            
+
+def applyPatch(): # TODO Make it not replace the entire line, only what is specified
+    doPatches("Makefile", "export SDK_PLATFORM	?=	iphoneos.internal", "export SDK_PLATFORM	?=	iphoneos\n", 36)
+    doPatches("makefiles/config.mk", "DEPLOYMENT_TARGET_FLAGS	=	-mwatchos-version-min=$(SDKVERSION)", "DEPLOYMENT_TARGET_FLAGS	=	-mwatchos-version-min=10.0\n", 26)
+    doPatches("makefiles/config.mk", "DEPLOYMENT_TARGET_FLAGS	=	-mtvos-version-min=$(SDKVERSION)", "DEPLOYMENT_TARGET_FLAGS	=	-mtvos-version-min==10.0\n", 29)
+    doPatches("makefiles/config.mk", "DEPLOYMENT_TARGET_FLAGS	=	-miphoneos-version-min=$(SDKVERSION)", "DEPLOYMENT_TARGET_FLAGS	=	-miphoneos-version-min=10.0\n", 32)
+    doPatches("drivers/flash_nand/ppn-swiss/ppn.c", r'			printf("nand_read_block_hook: failure %d reading block %u, count %zd\n", err, block, count);', r'			printf("nand_read_block_hook: failure %d reading block %u, count %u\n", err, block, count);' + "\n", 42)
+    doPatches("lib/fs/fs.c", r"		memset((void *)addr, *maxsize, 0);", r"		memset((void *)addr, *maxsize, (0));" + "\n", 394)
+    doPatches("makefiles/build.mk", "_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib -lcompiler_rt-static $(LIBBUILTIN_BUILD)", "_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib $(LIBBUILTIN_BUILD)\n", 24)
+    # Following patch is optional. Feel free to uncomment it if you want to (Make sure you have img4 installed to /usr/local/bin/img4)
+    #doPatches("tools/tools.mk", "export IMG4PAYLOAD	:=	$(shell xcrun -sdk $(SDKROOT) -find img4payload)", "export IMG4PAYLOAD	:=	/usr/local/bin/img4", 48)
+    print("\nPatches are done!")
     pass
 
 
@@ -155,8 +174,7 @@ def main():
     args = parser.parse_args()
 
     if args.apply_patch:
-        #applyPatch()
-        print('View the code of this script, it has all of the info provided to apply the patches')
+        applyPatch()
 
     elif args.build:
         #targets = devices() # Default, compile iBoot with all supported 32-bit devices
