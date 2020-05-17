@@ -2,11 +2,11 @@
 
 import argparse
 import os
-import stat
+import shutil
 import sqlite3
+import stat
 import subprocess
 import sys
-import shutil
 
 
 """
@@ -56,7 +56,7 @@ TODO:
 
 def doPatches(filepath, stockString, patchString, stringLine):
     # Bad patcher by Matty (@mosk_i)
-    print("Patching", filepath, " at line", stringLine)
+    print("Patching {}\nat line {}".format(filepath, stringLine))
     if os.path.exists(filepath):
         with open(filepath, "rt") as f:
             data = f.readlines()
@@ -74,12 +74,11 @@ def doPatches(filepath, stockString, patchString, stringLine):
                          stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 return
             else:
-                print("Didn't find '", stockString, "' in", filepath,
-                      " at line ", stringLine, " Moving on to next patch...")
+                print("Didn't find {}\nin\n{}\nat line\n{}\nMoving on to next patch...".format(
+                    stockString, filepath, stringLine))
                 return
     else:
-        print("Couldn't find file at '", filepath,
-              "'. Moving on to next patch...")
+        print("Couldn't find file at {}\nMoving on to next patch...".format(filepath))
         return
 
 
@@ -100,8 +99,6 @@ def applyPatch():  # TODO Make it not replace the entire line, only what is spec
               "_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib $(LIBBUILTIN_BUILD)\n", 24)
     # Following patch is optional. Feel free to uncomment it if you want to (Make sure you have img4 installed to /usr/local/bin/img4)
     #doPatches("tools/tools.mk", "export IMG4PAYLOAD	:=	$(shell xcrun -sdk $(SDKROOT) -find img4payload)", "export IMG4PAYLOAD	:=	/usr/local/bin/img4", 48)
-    print("\nPatches are done!")
-    pass
 
 
 def build(application=None, device=None):
