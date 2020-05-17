@@ -139,7 +139,12 @@ def clean():
 
 def checkFiles():
     # Provided from HomeDiagnostic
-    device_map = '/usr/local/standalone/firmware/device_map.db'
+    try:
+        device_map = '/usr/local/standalone/firmware/device_map.db'
+        os.path.exists(device_map)
+    except:
+        raise FileNotFoundError
+
     # Path for device_map.db
     xcode_path = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/'
     # We need to make this so we can build (currently symlinked to local device_map.db)
