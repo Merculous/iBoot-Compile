@@ -53,6 +53,8 @@ TODO:
 
 """
 
+# TODO Update this
+
 
 def doPatches(filepath, stockString, patchString, stringLine):
     # Bad patcher by Matty (@mosk_i)
@@ -83,22 +85,54 @@ def doPatches(filepath, stockString, patchString, stringLine):
 
 
 def applyPatch():  # TODO Make it not replace the entire line, only what is specified
-    doPatches("Makefile", "export SDK_PLATFORM	?=	iphoneos.internal",
-              "export SDK_PLATFORM	?=	iphoneos\n", 36)
-    doPatches("makefiles/config.mk", "DEPLOYMENT_TARGET_FLAGS	=	-mwatchos-version-min=$(SDKVERSION)",
-              "DEPLOYMENT_TARGET_FLAGS	=	-mwatchos-version-min=10.0\n", 26)
-    doPatches("makefiles/config.mk", "DEPLOYMENT_TARGET_FLAGS	=	-mtvos-version-min=$(SDKVERSION)",
-              "DEPLOYMENT_TARGET_FLAGS	=	-mtvos-version-min==10.0\n", 29)
-    doPatches("makefiles/config.mk", "DEPLOYMENT_TARGET_FLAGS	=	-miphoneos-version-min=$(SDKVERSION)",
-              "DEPLOYMENT_TARGET_FLAGS	=	-miphoneos-version-min=10.0\n", 32)
-    doPatches("drivers/flash_nand/ppn-swiss/ppn.c", r'			printf("nand_read_block_hook: failure %d reading block %u, count %zd\n", err, block, count);',
-              r'			printf("nand_read_block_hook: failure %d reading block %u, count %u\n", err, block, count);' + "\n", 42)
-    doPatches("lib/fs/fs.c", r"		memset((void *)addr, *maxsize, 0);",
-              r"		memset((void *)addr, *maxsize, (0));" + "\n", 394)
-    doPatches("makefiles/build.mk", "_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib -lcompiler_rt-static $(LIBBUILTIN_BUILD)",
-              "_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib $(LIBBUILTIN_BUILD)\n", 24)
+    doPatches(
+        "Makefile",
+        "export SDK_PLATFORM	?=	iphoneos.internal",
+        "export SDK_PLATFORM	?=	iphoneos\n",
+        36)
+
+    doPatches(
+        "makefiles/config.mk",
+        "DEPLOYMENT_TARGET_FLAGS	=	-mwatchos-version-min=$(SDKVERSION)",
+        "DEPLOYMENT_TARGET_FLAGS	=	-mwatchos-version-min=10.0\n",
+        26)
+
+    doPatches(
+        "makefiles/config.mk",
+        "DEPLOYMENT_TARGET_FLAGS	=	-mtvos-version-min=$(SDKVERSION)",
+        "DEPLOYMENT_TARGET_FLAGS	=	-mtvos-version-min==10.0\n",
+        29)
+
+    doPatches(
+        "makefiles/config.mk",
+        "DEPLOYMENT_TARGET_FLAGS	=	-miphoneos-version-min=$(SDKVERSION)",
+        "DEPLOYMENT_TARGET_FLAGS	=	-miphoneos-version-min=10.0\n",
+        32)
+
+    doPatches(
+        "drivers/flash_nand/ppn-swiss/ppn.c",
+        r'			printf("nand_read_block_hook: failure %d reading block %u, count %zd\n", err, block, count);',
+        r'			printf("nand_read_block_hook: failure %d reading block %u, count %u\n", err, block, count);' + "\n",
+        42)
+
+    doPatches(
+        "lib/fs/fs.c",
+        r"		memset((void *)addr, *maxsize, 0);",
+        r"		memset((void *)addr, *maxsize, (0));" + "\n",
+        394)
+
+    doPatches(
+        "makefiles/build.mk",
+        "_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib -lcompiler_rt-static $(LIBBUILTIN_BUILD)",
+        "_RUNTIME_FLAGS		:=	-L$(SDKROOT)/usr/local/lib $(LIBBUILTIN_BUILD)\n",
+        24)
+
     # Following patch is optional. Feel free to uncomment it if you want to (Make sure you have img4 installed to /usr/local/bin/img4)
-    #doPatches("tools/tools.mk", "export IMG4PAYLOAD	:=	$(shell xcrun -sdk $(SDKROOT) -find img4payload)", "export IMG4PAYLOAD	:=	/usr/local/bin/img4", 48)
+    # doPatches(
+    # "tools/tools.mk",
+    #"export IMG4PAYLOAD	:=	$(shell xcrun -sdk $(SDKROOT) -find img4payload)",
+    #"export IMG4PAYLOAD	:=	/usr/local/bin/img4",
+    # 48)
 
 
 def build(application=None, device=None):
@@ -108,25 +142,33 @@ def build(application=None, device=None):
 
     if application == 'EmbeddedIOP':
         print('Making EmbeddedIOP...')
-        subprocess.run(['make', 'APPLICATIONS=EmbeddedIOP'],
-                       stdout=subprocess.PIPE)  # Device was passed
+        subprocess.run([
+            'make',
+            'APPLICATIONS=EmbeddedIOP'],
+            stdout=subprocess.PIPE)
 
     elif application == 'iBoot':
         if device is not None:
             print('Making iBoot with device(s):', device)
-            # Device was passed
-            subprocess.run(['make', 'APPLICATIONS=iBoot',
-                            f'TARGETS={device}'], stdout=subprocess.PIPE)
+            subprocess.run([
+                'make',
+                'APPLICATIONS=iBoot',
+                'TARGETS={}'.format(device)],
+                stdout=subprocess.PIPE)
         else:
             sys.exit('No devices were passed!')
 
     elif application == 'SecureROM':
         print('Making SecureROM...')
-        subprocess.run(['make', 'VERBOSE=YES', 'APPLICATIONS=SecureROM',
-                        'IMAGE_FORMAT=img3'], stdout=subprocess.PIPE)
+        subprocess.run([
+            'make',
+            'VERBOSE=YES',
+            'APPLICATIONS=SecureROM',
+            'IMAGE_FORMAT=img3'],
+            stdout=subprocess.PIPE)
 
     else:
-        sys.exit('Invaild application, got:', application)
+        raise ValueError('Invaild application, got:', application)
 
 
 def clean():
@@ -144,27 +186,39 @@ def checkFiles():
 
     # Path for device_map.db
     xcode_path = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/'
-    # We need to make this so we can build (currently symlinked to local device_map.db)
-    dirtomake = f'{xcode_path}local/standalone/firmware/'
+
+    # We need to make this so we can build
+    dirtomake = '{}local/standalone/firmware/'.format(xcode_path)
 
     # Check if device_map.db exists
 
     if not os.path.exists(device_map):
-        sys.exit(f'Did not find device_map.db at: {device_map}')
+        raise FileNotFoundError(
+            'Did not find device_map.db at: {}'.format(device_map))
 
     # Check if we need to make the paths in Xcode
 
     if not os.path.exists(dirtomake):
-        print(f'{dirtomake} does not exist, we have to grant sudo privileges here...')
-        subprocess.run(["sudo", "mkdir", "-p", dirtomake],
-                       stdout=subprocess.PIPE)
+        print('{} does not exist, we have to grant sudo privileges here...'.format(
+            dirtomake))
+        subprocess.run([
+            "sudo",
+            "mkdir",
+            "-p",
+            dirtomake],
+            stdout=subprocess.PIPE)
 
     # Check if device_map.db exits in Xcode path
 
-    if not os.path.exists(f'{dirtomake}device_map.db'):
+    if not os.path.exists('{}device_map.db'.format(dirtomake)):
         print('Copying device_map.db to its necessary location in Xcode. We have to grant sudo privileges here...')
-        subprocess.run(["sudo", "cp", "-rv", device_map,
-                        f"{dirtomake}device_map.db"], stdout=subprocess.PIPE)
+        subprocess.run([
+            "sudo",
+            "cp",
+            "-rv",
+            device_map,
+            "{}device_map.db".format(dirtomake)],
+            stdout=subprocess.PIPE)
 
 
 def devices():
@@ -177,12 +231,14 @@ def devices():
 
 
 def main():
-    parser = argparse.ArgumentParser(usage=f"{sys.argv[0]} <option>")
+    argv = sys.argv
+    parser = argparse.ArgumentParser(usage="{} <option>".format(argv[0]))
     parser.add_argument(
         "--apply-patch", help="Apply patches from patchfile to enable compiling", action="store_true")
     parser.add_argument(
         "--build", help="Start the build process", action="store_true")
-    parser.add_argument("--clean", help="Clean up", action="store_true")
+    parser.add_argument(
+        "--clean", help="Clean up", action="store_true")
     parser.add_argument(
         "--check", help="This will ensure you have all of the required files", action="store_true")
     parser.add_argument(
@@ -212,17 +268,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-"""
-Road to compiling the only provided 32-bit ROM, with weird (to me) directories:
-    drivers/apple/aes_v2/aes_v2.h:16:10: fatal error: 'soc/t8002/b0/module/aes.h' file not found
-    ./drivers/samsung/aes/aes.h
-    ./include/drivers/aes.h
-    ./platform/t8002/include/platform/soc/spds/aes.h
-    socgen
-    ./platform/t8002/b0
-    ./platform/s8000/include/platform/soc/s8000/b0
-    ./platform/s8000/include/platform/soc/s8001/b0
-    platform/s8000/include/platform/soc/s8000/b0
-    make VERBOSE=YES APPLICATIONS=SecureROM TARGETS=t8002 IMAGE_FORMAT=img3
-"""
